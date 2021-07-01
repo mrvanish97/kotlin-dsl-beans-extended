@@ -1,0 +1,6 @@
+package by.mrvanish97.kbnsext
+
+import org.springframework.boot.autoconfigure.SpringBootApplication
+
+@SpringBootApplication
+class TestSpringApplication
