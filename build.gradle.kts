@@ -18,8 +18,8 @@ plugins {
   kotlin("plugin.spring") version "1.5.20"
 }
 
-group = "by.mrvanish97"
-version = "0.0.1-SNAPSHOT"
+group = "io.github.mrvanish97.kbnsext"
+version = "0.0.2"
 java.sourceCompatibility = JavaVersion.VERSION_11
 
 repositories {
