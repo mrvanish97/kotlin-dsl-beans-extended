@@ -15,7 +15,7 @@ First thing you have to do is to add `package com.foo.example`, unless it will b
 
 Then, write bean definitions as if it's a body of `init: BeanDefinitionDsl.() -> Unit` variable passed into the `BeanDefinitionDsl`'s `beans { ... }` function
 
-```
+``` Kotlin
 package com.foo.example
 
 bean {
