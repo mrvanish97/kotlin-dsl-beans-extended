@@ -1,4 +1,4 @@
-/*******************************************************************************
+/*
  * Copyright (c) 2021 mrvanish97 [and others]
  *
  * This program and the accompanying materials are made
@@ -6,7 +6,7 @@
  * which is available at https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- ******************************************************************************/
+ */
 
 rootProject.name = "kotlin-dsl-beans-extended"
 
