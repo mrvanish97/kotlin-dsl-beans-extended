@@ -1,5 +1,5 @@
 # kotlin-dsl-beans-extended
-A little library for using on your Spring Boot projects that add possibility to declate beans in Kotlin Script files.
+A little library for using on your Spring Boot projects that add possibility to declare beans in Kotlin Script files.
 
 It uses Spring's fresh new class `BeanDefinitionDsl` under the hood to provide easy and convinient way to organize your beans without messy `@get:Bean` annotations.
 Obviously, this is designed to use on projects with Kotlin configured.
