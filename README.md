@@ -11,7 +11,7 @@ Coming soon
 After you added a library dependency, create a file under the source folder with extension `.beans.kts`
 Let's imagine, the name of this file is `root.beans.kts` placed in `com.foo.example` package and it's empty.
 
-First thing you have to do is to add `package com.foo.example`, unless it will be placed in root package during the compilation and ignored by `@ComponentScan`
+First thing you have to do is to add `package com.foo.example`, otherwise it will be placed in root package during the compilation and ignored by `@ComponentScan`
 
 Then, write bean definitions as if it's a body of `init: BeanDefinitionDsl.() -> Unit` variable passed into the `BeanDefinitionDsl`'s `beans { ... }` function
 
