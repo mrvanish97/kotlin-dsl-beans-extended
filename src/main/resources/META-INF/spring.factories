@@ -8,4 +8,5 @@
 # SPDX-License-Identifier: EPL-2.0
 #
 
+# suppress inspection "UnusedProperty"
 org.springframework.boot.SpringApplicationRunListener=by.mrvanish97.kbnsext.BeansDefinitionRunListener
