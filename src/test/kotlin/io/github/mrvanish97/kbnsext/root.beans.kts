@@ -8,6 +8,14 @@
  * SPDX-License-Identifier: EPL-2.0
  ******************************************************************************/
 
-package by.mrvanish97.kbnsext
+package io.github.mrvanish97.kbnsext
 
-class TestEntity(val value: String)
+bean {
+  TestEntity(SCRIPT_ENTITY)
+}
+
+profile("s") {
+  bean {
+    "S"
+  }
+}

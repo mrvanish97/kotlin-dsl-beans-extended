@@ -8,14 +8,9 @@
  * SPDX-License-Identifier: EPL-2.0
  ******************************************************************************/
 
-package by.mrvanish97.kbnsext
+package io.github.mrvanish97.kbnsext
 
-bean {
-  TestEntity(SCRIPT_ENTITY)
-}
+import org.springframework.boot.autoconfigure.SpringBootApplication
 
-profile("s") {
-  bean {
-    "S"
-  }
-}
+@SpringBootApplication
+class TestSpringApplication

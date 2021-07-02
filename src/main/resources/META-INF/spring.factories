@@ -9,4 +9,4 @@
 #
 
 # suppress inspection "UnusedProperty"
-org.springframework.boot.SpringApplicationRunListener=by.mrvanish97.kbnsext.BeansDefinitionRunListener
+org.springframework.boot.SpringApplicationRunListener=io.github.mrvanish97.kbnsext.BeansDefinitionRunListener
