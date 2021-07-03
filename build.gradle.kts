@@ -8,13 +8,13 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import java.util.Properties
 
 plugins {
   id("org.springframework.boot") version "2.5.2"
   id("io.spring.dependency-management") version "1.0.11.RELEASE"
-  kotlin("jvm") version "1.5.20"
-  kotlin("plugin.spring") version "1.5.20"
+  kotlin("jvm") version "1.5.10"
+  kotlin("plugin.spring") version "1.5.10"
   signing
   `maven-publish`
 }
@@ -28,7 +28,7 @@ repositories {
 }
 
 dependencies {
-  implementation("org.springframework.boot:spring-boot-starter")
+  implementation("org.springframework.boot:spring-boot")
 
   implementation("org.jetbrains.kotlin:kotlin-reflect")
   implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
@@ -40,7 +40,7 @@ dependencies {
   testImplementation("org.springframework.boot:spring-boot-starter-test")
 }
 
-tasks.withType<KotlinCompile> {
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
   kotlinOptions {
     freeCompilerArgs = listOf("-Xjsr305=strict")
     jvmTarget = "11"
@@ -51,31 +51,66 @@ tasks.withType<Test> {
   useJUnitPlatform()
 }
 
-val javadocJar = "javadocJar"
-task<Jar>(name = javadocJar) {
-  archiveClassifier.set("javadoc")
-  from(tasks["javadoc"])
+// Stub secrets to let the project sync and build without the publication values set up
+ext["signing.keyId"] = null
+ext["signing.password"] = null
+ext["signing.secretKeyRingFile"] = null
+ext["ossrhUsername"] = null
+ext["ossrhPassword"] = null
+
+// Grabbing secrets from local.properties file or from environment variables, which could be used on CI
+val secretPropsFile = project.rootProject.file("local.properties")
+if (secretPropsFile.exists()) {
+  secretPropsFile.reader().use {
+    Properties().apply {
+      load(it)
+    }
+  }.onEach { (name, value) ->
+    ext[name.toString()] = value
+  }
+} else {
+  ext["signing.keyId"] = System.getenv("SIGNING_KEY_ID")
+  ext["signing.password"] = System.getenv("SIGNING_PASSWORD")
+  ext["signing.secretKeyRingFile"] = System.getenv("SIGNING_SECRET_KEY_RING_FILE")
+  ext["ossrhUsername"] = System.getenv("OSSRH_USERNAME")
+  ext["ossrhPassword"] = System.getenv("OSSRH_PASSWORD")
 }
 
-val sourcesJar = "sourcesJar"
-task<Jar>(name = sourcesJar) {
+val sourcesJar by tasks.registering(Jar::class) {
   archiveClassifier.set("sources")
-  from(sourceSets["main"].allSource)
+  from(sourceSets.main.get().allSource)
 }
 
-artifacts {
-  archives(tasks[javadocJar])
-  archives(tasks[sourcesJar])
-}
-
-tasks.withType<Sign> {
-  sign(configurations["archives"])
-}
+fun getExtraString(name: String) = ext[name]?.toString()
 
 publishing {
+// Configure maven central repository
+  repositories {
+    maven {
+      name = "sonatype"
+      setUrl("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
+      credentials {
+        username = getExtraString("ossrhUsername")
+        password = getExtraString("ossrhPassword")
+      }
+    }
+  }
+
+// Configure all publications
   publications {
+
     create<MavenPublication>("mavenJava") {
+
+      beforeEvaluate {
+        artifactId = tasks.jar.get().archiveBaseName.get()
+      }
+
+      from(components["kotlin"])
+      artifact(sourcesJar.get())
+
+      // Provide artifacts information requited by Maven Central
       pom {
+
         name.set("Kotlin Beans Script")
         description.set("Support for .beans.kts files used for configuring Beans in Spring Boot")
         url.set("https://github.com/mrvanish97/kotlin-dsl-beans-extended")
@@ -100,4 +135,10 @@ publishing {
       }
     }
   }
+}
+
+// Signing artifacts. Signing.* extra properties values will be used
+
+signing {
+  sign(publishing.publications)
 }
