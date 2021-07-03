@@ -5,7 +5,20 @@ It uses Spring's fresh new class `BeanDefinitionDsl` under the hood to provide e
 Obviously, this is designed to use on projects with Kotlin configured.
 
 ### Maven and gradle
-Coming soon
+```xml
+<dependency>
+  <groupId>io.github.mrvanish97.kbnsext</groupId>
+  <artifactId>kotlin-dsl-beans-extended</artifactId>
+  <version>0.0.3</version>
+  <type>module</type>
+</dependency>
+```
+```groovy
+implementation group: 'io.github.mrvanish97.kbnsext', name: 'kotlin-dsl-beans-extended', version: '0.0.3'
+```
+```kotlin
+implementation("io.github.mrvanish97.kbnsext:kotlin-dsl-beans-extended:0.0.3")
+```
 
 ### Usage example
 After you added a library dependency, create a file under the source folder with extension `.beans.kts`
