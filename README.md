@@ -14,10 +14,10 @@ Obviously, this is designed to use on projects with Kotlin configured.
 </dependency>
 ```
 ```groovy
-implementation group: 'io.github.mrvanish97.kbnsext', name: 'kotlin-dsl-beans-extended', version: '0.0.3'
+implementation group: 'io.github.mrvanish97.kbnsext', name: 'kotlin-dsl-beans-extended', version: '0.0.4'
 ```
 ```kotlin
-implementation("io.github.mrvanish97.kbnsext:kotlin-dsl-beans-extended:0.0.3")
+implementation("io.github.mrvanish97.kbnsext:kotlin-dsl-beans-extended:0.0.4")
 ```
 
 ### Usage example

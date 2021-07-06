@@ -10,6 +10,7 @@
 
 package io.github.mrvanish97.kbnsext
 
+import org.apache.commons.logging.LogFactory
 import org.springframework.boot.SpringApplication
 import org.springframework.boot.SpringApplicationRunListener
 import org.springframework.context.ConfigurableApplicationContext
@@ -20,6 +21,9 @@ import org.springframework.context.support.beans
 import org.springframework.core.annotation.AnnotationAttributes
 import org.springframework.core.type.AnnotationMetadata
 import org.springframework.util.ClassUtils
+import java.lang.reflect.InvocationTargetException
+
+private val logger = LogFactory.getLog(BeansDefinitionRunListener::class.java)
 
 class BeansDefinitionRunListener(
   application: SpringApplication,
@@ -63,17 +67,14 @@ class BeansDefinitionRunListener(
       for (className in classNames) {
         val clazz = try {
           classLoader.loadClass(className)
-        } catch (e : ClassNotFoundException) {
+        } catch (e: ClassNotFoundException) {
           continue
         }
         val constructor = clazz.getConstructor(BeanDefinitionDsl::class.java) ?: continue
-        val dsl = beans {  }
-        // HACK : We need to do this 'pre-initialization' since there's no other ways to initialize context
-        // otherwise, lateinit variable context in BeanDefinitionDsl won't be initialized, which leads to a corresponding Exception
-        dsl.initialize(applicationContext)
-        runCatching {
-          constructor.newInstance(dsl)
-        }
+        if (!constructor.trySetAccessible()) continue
+        beans {
+          constructor.newInstance(this)
+        }.initialize(applicationContext)
       }
     }
   }

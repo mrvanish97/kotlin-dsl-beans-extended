@@ -17,6 +17,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.ApplicationContext
 
 const val SCRIPT_ENTITY = "script-entity"
+const val ENV_SCRIPT_ENTITY = "env-script-entity"
 
 @SpringBootTest
 class BeansFileAnnotationTest @Autowired constructor(
@@ -41,6 +42,11 @@ class BeansFileAnnotationTest @Autowired constructor(
   @Test
   fun hasBeanDefinedByScript() {
     assert(isEntityPresented(SCRIPT_ENTITY))
+  }
+
+  @Test
+  fun hasBeanDefinedByScriptWithEnv() {
+    assert(isEntityPresented(ENV_SCRIPT_ENTITY))
   }
 
 }

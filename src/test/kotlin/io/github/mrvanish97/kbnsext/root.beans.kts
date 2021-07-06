@@ -14,8 +14,8 @@ bean {
   TestEntity(SCRIPT_ENTITY)
 }
 
-profile("s") {
+environment({ true }) {
   bean {
-    "S"
+    TestEntity(ENV_SCRIPT_ENTITY)
   }
 }
