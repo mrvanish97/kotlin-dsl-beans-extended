@@ -10,12 +10,33 @@
 
 package io.github.mrvanish97.kbnsext
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingClass
+
 bean {
   TestEntity(SCRIPT_ENTITY)
 }
 
 environment({ true }) {
-  bean {
+  bean(ENV_SCRIPT_ENTITY) {
     TestEntity(ENV_SCRIPT_ENTITY)
   }
+}
+
+bean {
+  TestEntity(applicationContext.applicationName)
+}
+
+annotate {
+  with<ConditionalOnMissingClass> {
+    it::value set String::class.javaName
+  }
+}.bean("${MISSING_ANNOTATED_SCRIPT_ENTITY}testEntity") {
+  TestEntity(MISSING_ANNOTATED_SCRIPT_ENTITY)
+}
+
+annotate {
+  with<ConditionalOnClass> { it::value set String::class.java }
+}.bean {
+  TestEntity(ref<TestEntity>(ENV_SCRIPT_ENTITY).value + CONDITIONAL_PREFIX)
 }

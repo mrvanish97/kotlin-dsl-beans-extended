@@ -20,7 +20,7 @@ plugins {
 }
 
 group = "io.github.mrvanish97.kbnsext"
-version = "0.0.4"
+version = "0.1.0"
 java.sourceCompatibility = JavaVersion.VERSION_11
 
 repositories {
@@ -34,6 +34,10 @@ dependencies {
   implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 
   implementation("org.jetbrains.kotlin:kotlin-script-util")
+
+  implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm")
+
+  implementation("net.bytebuddy:byte-buddy:1.11.6")
 
   annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 

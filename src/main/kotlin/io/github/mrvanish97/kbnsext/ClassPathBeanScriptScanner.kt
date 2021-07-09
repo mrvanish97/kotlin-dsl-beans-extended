@@ -12,14 +12,17 @@ package io.github.mrvanish97.kbnsext
 
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider
 import org.springframework.core.env.Environment
+import org.springframework.core.io.ResourceLoader
 
 private const val BEAN_SCRIPT_CLASS_PATTERN = "**/*_beans.class"
 
 class ClassPathBeanScriptScanner(
-  environment: Environment
+  environment: Environment,
+  resourceLoader: ResourceLoader
 ) : ClassPathScanningCandidateComponentProvider(false, environment) {
 
   init {
+    this.resourceLoader = resourceLoader
     setResourcePattern(BEAN_SCRIPT_CLASS_PATTERN)
     addIncludeFilter { metadataReader, _ ->
       metadataReader.classMetadata.superClassName == BeansScript::class.java.name

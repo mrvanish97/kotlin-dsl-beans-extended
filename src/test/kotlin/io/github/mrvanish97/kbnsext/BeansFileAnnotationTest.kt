@@ -18,6 +18,10 @@ import org.springframework.context.ApplicationContext
 
 const val SCRIPT_ENTITY = "script-entity"
 const val ENV_SCRIPT_ENTITY = "env-script-entity"
+const val CONFUSING_PRIMARY_ANNOTATION_ENTITY = "confusing-primary-annotation-entity"
+const val CONDITIONAL_PREFIX = "-conditional"
+const val ANNOTATED_CONDITIONAL_SCRIPT_ENTITY = ENV_SCRIPT_ENTITY + CONDITIONAL_PREFIX
+const val MISSING_ANNOTATED_SCRIPT_ENTITY = "missing-annotated-env-script-entity"
 
 @SpringBootTest
 class BeansFileAnnotationTest @Autowired constructor(
@@ -35,11 +39,6 @@ class BeansFileAnnotationTest @Autowired constructor(
   }
 
   @Test
-  fun hasBeanDefinedByAnnotations() {
-    assert(isEntityPresented(ANNOTATED_ENTITY))
-  }
-
-  @Test
   fun hasBeanDefinedByScript() {
     assert(isEntityPresented(SCRIPT_ENTITY))
   }
@@ -47,6 +46,21 @@ class BeansFileAnnotationTest @Autowired constructor(
   @Test
   fun hasBeanDefinedByScriptWithEnv() {
     assert(isEntityPresented(ENV_SCRIPT_ENTITY))
+  }
+
+  @Test
+  fun hasNoBeanDefinedByScriptWithNonMatchingConditionInAnnotation() {
+    assert(!isEntityPresented(MISSING_ANNOTATED_SCRIPT_ENTITY))
+  }
+
+  @Test
+  fun hasBeanDefinedByScriptWithConditionalAnnotation() {
+    assert(isEntityPresented(ANNOTATED_CONDITIONAL_SCRIPT_ENTITY))
+  }
+
+  @Test
+  fun hasBeanWithApplicationName() {
+    assert(isEntityPresented(context.applicationName))
   }
 
 }
