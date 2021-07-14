@@ -1,5 +1,8 @@
 # Changelog
 
+### 0.3.1
+- Fixed beans creation in root configuration while not specifying anything in `rootConfiguration`
+
 ### 0.3.0
 
 - Almost got rid of `BeanDefinitionDsl` in favor of fully-runtime configuration definitions.

@@ -27,7 +27,7 @@ bean {
 bean(name = "anotherAmazingBean", isLazyInit = true) {
   MyAmazingBean(
     text = "Hello!",
-    context = applicationContext // for some very special reason
+    context = context // for some very special reason
   )
 }
 
@@ -137,7 +137,7 @@ If you want to use another one script, you can do the following:
     runApplication(ScriptDefinition("com.foo.example.bar.script"), *args)
   }
   ```
-The main thing it does is basically adding string reference to the compiled script class
+The main thing it does is basically adding string reference to the compiled script class as a `source` for Spring Application
 **Important note:** for the current version, it's not possible not to define `proxyBeanMethods = false` since it will lead to spring proxying errors.
 I hope it will be fixed in the future. For this case, I've opened a discussion on Kotlin forum. 
 

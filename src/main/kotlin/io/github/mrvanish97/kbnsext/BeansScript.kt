@@ -108,7 +108,7 @@ abstract class BeansScript(
   }
 
   internal fun buildClasses() {
-    if (rootUserConfiguration != null || beans.isEmpty()) {
+    if (rootUserConfiguration != null || beans.isNotEmpty()) {
       listOf(this).plus(innerContainers)
     } else {
       innerContainers
