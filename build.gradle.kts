@@ -21,7 +21,7 @@ plugins {
 }
 
 group = "io.github.mrvanish97.kbnsext"
-version = "0.1.0"
+version = "0.3.0"
 java.sourceCompatibility = JavaVersion.VERSION_11
 
 repositories {
