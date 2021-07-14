@@ -15,13 +15,19 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.ApplicationContext
+import org.springframework.context.annotation.PropertySource
 
 const val SCRIPT_ENTITY = "script-entity"
 const val ENV_SCRIPT_ENTITY = "env-script-entity"
-const val CONFUSING_PRIMARY_ANNOTATION_ENTITY = "confusing-primary-annotation-entity"
+const val NOT_EXISTING_SCRIPT_ENTITY = "not-existing-script-entity"
 const val CONDITIONAL_PREFIX = "-conditional"
 const val ANNOTATED_CONDITIONAL_SCRIPT_ENTITY = ENV_SCRIPT_ENTITY + CONDITIONAL_PREFIX
 const val MISSING_ANNOTATED_SCRIPT_ENTITY = "missing-annotated-env-script-entity"
+const val CONFIGURATION_BEAN_ANNOTATED = "configuration-bean-annotated"
+const val CONFIGURATION_BEAN_ANNOTATED_CLASS_NAME = "ConfigBeanAnnotated"
+const val CONFIGURATION_BEAN_ANNOTATED_METHOD_NAME = "getTestEntity"
+const val CONFIGURATION_BEAN_ANNOTATED_BEAN_NAME = "configuration-inner-bean"
+const val ROOT_SCRIPT_CONFIG_NAME = "root-script-config-name"
 
 @SpringBootTest
 class BeansFileAnnotationTest @Autowired constructor(
@@ -61,6 +67,36 @@ class BeansFileAnnotationTest @Autowired constructor(
   @Test
   fun hasBeanWithApplicationName() {
     assert(isEntityPresented(context.applicationName))
+  }
+
+  @Test
+  fun rootScriptIsAnnotatedAndHasName() {
+    assertNotNull(context.getBean(ROOT_SCRIPT_CONFIG_NAME))
+  }
+
+  @Test
+  fun hasConfigurationInnerBean() {
+    assertNotNull(context.getBean(CONFIGURATION_BEAN_ANNOTATED_BEAN_NAME))
+  }
+
+  @Test
+  fun hasConfigurationBeanWithMethod() {
+    assertNotNull(context.getBean(CONFIGURATION_BEAN_ANNOTATED)::class[CONFIGURATION_BEAN_ANNOTATED_METHOD_NAME])
+  }
+
+  @Test
+  fun configurationBeanHasAnnotation() {
+    assertNotNull(context.findAnnotationOnBean(CONFIGURATION_BEAN_ANNOTATED, PropertySource::class.java))
+  }
+
+  @Test
+  fun hasNoBeanWithContextId() {
+    assert(!isEntityPresented(context.id ?: ""))
+  }
+
+  @Test
+  fun hasNoNonExistingBeans() {
+    assert(!isEntityPresented(NOT_EXISTING_SCRIPT_ENTITY))
   }
 
 }

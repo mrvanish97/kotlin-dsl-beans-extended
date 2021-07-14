@@ -10,7 +10,8 @@
 
 package io.github.mrvanish97.kbnsext
 
-import org.springframework.boot.autoconfigure.SpringBootApplication
+fun interface DestroyMethodNameProvider {
 
-@SpringBootApplication
-class TestSpringApplication
+  fun generateDestroyMethodName(bean: AnnotatableBean<*>): String
+
+}

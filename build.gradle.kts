@@ -15,6 +15,7 @@ plugins {
   id("io.spring.dependency-management") version "1.0.11.RELEASE"
   kotlin("jvm") version "1.5.10"
   kotlin("plugin.spring") version "1.5.10"
+  kotlin("plugin.allopen") version "1.5.10"
   signing
   `maven-publish`
 }
@@ -42,6 +43,10 @@ dependencies {
   annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 
   testImplementation("org.springframework.boot:spring-boot-starter-test")
+}
+
+allOpen {
+  annotation("io.github.mrvanish97.kbnsext.BeansScript")
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {

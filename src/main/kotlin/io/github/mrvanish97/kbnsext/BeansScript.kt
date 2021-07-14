@@ -10,32 +10,14 @@
 
 package io.github.mrvanish97.kbnsext
 
-import net.bytebuddy.ByteBuddy
-import net.bytebuddy.dynamic.loading.ClassLoadingStrategy
-import net.bytebuddy.implementation.InvocationHandlerAdapter
-import org.springframework.beans.factory.config.BeanDefinitionCustomizer
-import org.springframework.beans.factory.support.BeanDefinitionReaderUtils
-import org.springframework.context.annotation.*
-import org.springframework.context.support.BeanDefinitionDsl
+import io.github.mrvanish97.kbnsext.BeansScript.Companion.BEANS_SCRIPT_EXTENSION
 import org.springframework.context.support.GenericApplicationContext
-import org.springframework.util.ClassUtils.CGLIB_CLASS_SEPARATOR
-import java.lang.annotation.ElementType
-import java.lang.reflect.Modifier
-import java.util.*
-import java.util.concurrent.ConcurrentHashMap
+import org.springframework.core.env.ConfigurableEnvironment
+import org.springframework.core.env.Profiles
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
 import kotlin.script.experimental.annotations.KotlinScript
 import kotlin.script.experimental.api.*
-
-const val BEANS_SCRIPT_EXTENSION = "beans.kts"
-
-private val enhancerCounters = ConcurrentHashMap<String, AtomicInteger>()
-
-@PublishedApi
-internal val kotlinTargetClass = Target::class.java
-
-@PublishedApi
-internal val javaTargetClass = java.lang.annotation.Target::class.java
 
 @KotlinScript(
   displayName = "Spring Beans Script",
@@ -43,135 +25,94 @@ internal val javaTargetClass = java.lang.annotation.Target::class.java
   compilationConfiguration = BeansScriptCompilationConfiguration::class,
 )
 abstract class BeansScript(
-  @PublishedApi internal val basePackageName: String,
-  @PublishedApi internal val context: GenericApplicationContext
-) {
+  private val context: GenericApplicationContext
+) : AbstractConfigurationContainer(context) {
 
-  @Suppress("unused")
-  val BeanDefinitionDsl.BeanSupplierContext.applicationContext
-    get() = context
+  val environment
+    get() = context.environment
 
-  class AnnotationDsl internal constructor() {
+  fun environment(predicate: ConfigurableEnvironment.() -> Boolean) = environment.`if`(predicate)
 
-    @PublishedApi
-    internal val annotations = mutableListOf<Annotation>()
+  fun profile(vararg profile: String, init: () -> Unit) = environment.`if` {
+    acceptsProfiles(Profiles.of(*profile))
+  }.then(init)
 
-    inline fun <reified A : Annotation> with(initializer: AnnotationBuilder<A>.(A) -> Unit = {}) {
-      val annotationClass = A::class.java
-      val applicable = when {
-        annotationClass.isAnnotationPresent(kotlinTargetClass) -> {
-          val kotlinTarget = annotationClass.getAnnotation(kotlinTargetClass)
-          kotlinTarget.allowedTargets.any {
-            it == AnnotationTarget.FUNCTION
-          }
-        }
-        annotationClass.isAnnotationPresent(javaTargetClass) -> {
-          val javaTarget = annotationClass.getAnnotation(javaTargetClass)
-          javaTarget.value.any {
-            it == ElementType.METHOD
-          }
-        }
-        else -> false
-      }
-      if (!applicable) {
-        throw IllegalArgumentException("Annotation ${annotationClass.name} is not applicable neither for methods nor types")
-      }
-      addAnnotation(annotationBuilder(initializer))
-    }
-
-    @PublishedApi
-    internal fun addAnnotation(annotation: Annotation): Boolean {
-      return annotations.add(annotation)
-    }
-
+  companion object {
+    private val rootConfigurationUpdater = AtomicReferenceFieldUpdater.newUpdater(
+      BeansScript::class.java,
+      AnnotatableConfiguration::class.java,
+      BeansScript::rootUserConfiguration.name
+    )
+    private const val BEANS_SCRIPT_NAME = "beans"
+    const val BEANS_SCRIPT_EXTENSION = "$BEANS_SCRIPT_NAME.kts"
+    const val COMPILED_SCRIPT_SUFFIX = "_$BEANS_SCRIPT_NAME"
   }
 
-  inner class AnnotatedBeanDsl internal constructor(@PublishedApi internal val annotations: List<Annotation>) {
+  @Volatile
+  private var rootUserConfiguration: AnnotatableConfiguration? = null
 
-    @PublishedApi
-    internal fun Class<*>.makeGeneratedClassName(): String {
-      val base = "${basePackageName}.${this.simpleName}_Configuration" +
-        "${CGLIB_CLASS_SEPARATOR}ByteBuddyEnhanced${CGLIB_CLASS_SEPARATOR}"
-      val number = enhancerCounters.getOrPut(base) { AtomicInteger(0) }.getAndIncrement()
-      return "$base$number"
-    }
+  private val thisScriptClassName = this::class.java.simpleName.substringBefore(COMPILED_SCRIPT_SUFFIX)
 
-    inline fun <reified T : Any> bean(
-      name: String? = null,
-      scope: BeanDefinitionDsl.Scope? = null,
-      isLazyInit: Boolean? = null,
-      isPrimary: Boolean? = null,
-      isAutowireCandidate: Boolean? = null,
-      initMethodName: String? = null,
-      destroyMethodName: String? = null,
-      description: String? = null,
-      role: BeanDefinitionDsl.Role? = null,
-      crossinline function: BeanDefinitionDsl.BeanSupplierContext.() -> T
-    ) {
-      val additionalAnnotations = mutableListOf<Annotation>()
-      val beanName = name.toBeanName(T::class.java)
-      val beanAnnotation = annotationBuilder<Bean> {
-        it::name set beanName
-        it::autowireCandidate set isAutowireCandidate
-        it::initMethod set initMethodName
-        it::autowireCandidate set isAutowireCandidate
-        it::destroyMethod set destroyMethodName
-      }
-      additionalAnnotations.add(beanAnnotation)
-      if (scope != null) {
-        val scopeAnnotation = annotationBuilder<Scope> {
-          it::scopeName set scope.name.lowercase(Locale.getDefault())
-        }
-        additionalAnnotations.add(scopeAnnotation)
-      }
-      if (isLazyInit != null) {
-        val lazyAnnotation = annotationBuilder<Lazy> {
-          it::value set isLazyInit
-        }
-        additionalAnnotations.add(lazyAnnotation)
-      }
-      if (isPrimary == true) {
-        additionalAnnotations.add(annotationBuilder<Primary>())
-      }
-      if (description != null) {
-        val descriptionAnnotation = annotationBuilder<Description> {
-          it::value set description
-        }
-        additionalAnnotations.add(descriptionAnnotation)
-      }
-      if (role != null) {
-        val roleAnnotation = annotationBuilder<Role> {
-          it::value set role
-        }
-        additionalAnnotations.add(roleAnnotation)
-      }
-      val methodAnnotations = annotations.plus(additionalAnnotations).toTypedArray()
-      val generatedConfigurationClass = ByteBuddy()
-        .subclass(Any::class.java)
-        .name(T::class.java.makeGeneratedClassName())
-        .annotateType(annotationBuilder<Configuration>())
-        .defineMethod(beanName.makeMethodName(), T::class.java, Modifier.PUBLIC)
-        .intercept(InvocationHandlerAdapter.of { _, _, _ ->
-          function(BeanDefinitionDsl.BeanSupplierContext(context))
-        })
-        .annotateMethod(*methodAnnotations)
-        .make()
-        .load(context.classLoader, ClassLoadingStrategy.Default.INJECTION)
-        .loaded
-      val configurationBeanName = null.toBeanName(generatedConfigurationClass)
-      context.registerBean(configurationBeanName, generatedConfigurationClass, *emptyArray<BeanDefinitionCustomizer>())
-    }
+  private val defaultRootConfigurationClassName = "${thisScriptClassName}Configuration"
 
-    @PublishedApi
-    internal fun String?.toBeanName(clazz: Class<*>) = this ?: BeanDefinitionReaderUtils
-      .uniqueBeanName(clazz.name, context)
+  override val definition: AnnotatableConfiguration
+    get() = rootUserConfiguration ?: AnnotatableConfiguration()
+  override val basePackage: String
+    get() = this::class.java.packageName
 
+  override fun buildAnonymousConfigurationName() = defaultRootConfigurationClassName
+
+  fun rootConfiguration(
+    name: String? = null,
+    proxyBeanMethods: Boolean? = null,
+    className: String? = null,
+    profile: String? = null
+  ): Annotatable<DslInit> {
+    return rootConfiguration(name, proxyBeanMethods, className, profile?.let { arrayOf(it) })
   }
 
-  fun annotate(init: AnnotationDsl.() -> Unit): AnnotatedBeanDsl {
-    val dsl = AnnotationDsl()
-    init(dsl)
-    return AnnotatedBeanDsl(dsl.annotations)
+  fun rootConfiguration(
+    name: String? = null,
+    proxyBeanMethods: Boolean? = null,
+    className: String? = null,
+    profile: Array<String>?
+  ): Annotatable<DslInit> {
+    val config = AnnotatableConfiguration(name, proxyBeanMethods, className, profile)
+    if (!rootConfigurationUpdater.compareAndSet(this, null, config)) {
+      throw IllegalArgumentException("rootConfiguration should be called only once")
+    }
+    return AnnotatableWrappedContext(config)
+  }
+
+  private val innerAnonymousConfigurationCounter = AtomicInteger(0)
+
+  private val innerContainers = mutableListOf<AbstractConfigurationContainer>()
+
+  fun configuration(
+    name: String? = null,
+    proxyBeanMethods: Boolean? = null,
+    className: String? = null,
+    init: AbstractConfigurationContainer.() -> Unit
+  ): Annotatable<DslInit> {
+    val config = AnnotatableConfiguration(name, proxyBeanMethods, className)
+    val container = object : AbstractConfigurationContainer(context) {
+      override val definition = config
+      override val basePackage = this@BeansScript.basePackage
+      override fun buildAnonymousConfigurationName(): String {
+        return "${thisScriptClassName}Configuration${innerAnonymousConfigurationCounter.getAndIncrement()}"
+      }
+    }
+    container.apply(init)
+    innerContainers.add(container)
+    return AnnotatableWrappedContext(config)
+  }
+
+  internal fun buildClasses() {
+    if (rootUserConfiguration != null || beans.isEmpty()) {
+      listOf(this).plus(innerContainers)
+    } else {
+      innerContainers
+    }.forEach { it.buildClassAndInject() }
   }
 
 }
@@ -180,5 +121,5 @@ object BeansScriptCompilationConfiguration : ScriptCompilationConfiguration(body
   ide {
     acceptedLocations(ScriptAcceptedLocation.Everywhere)
   }
-  implicitReceivers(KotlinType(BeanDefinitionDsl::class))
+  compilerOptions("-P plugin:org.jetbrains.kotlin.allopen:preset=spring")
 })

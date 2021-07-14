@@ -10,11 +10,12 @@
 
 package io.github.mrvanish97.kbnsext
 
+import io.github.mrvanish97.kbnsext.BeansScript.Companion.COMPILED_SCRIPT_SUFFIX
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider
 import org.springframework.core.env.Environment
 import org.springframework.core.io.ResourceLoader
 
-private const val BEAN_SCRIPT_CLASS_PATTERN = "**/*_beans.class"
+private const val BEAN_SCRIPT_CLASS_PATTERN = "**/*$COMPILED_SCRIPT_SUFFIX.class"
 
 class ClassPathBeanScriptScanner(
   environment: Environment,

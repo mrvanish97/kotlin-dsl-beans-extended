@@ -18,16 +18,18 @@ private val emptyAnnotationsCache = ConcurrentHashMap<Class<out Annotation>, Ann
 
 inline fun <reified A : Annotation> annotationBuilder() = AnnotationBuilder(A::class.java).build()
 inline fun <reified A : Annotation> annotationBuilder(
-  initBuilder: AnnotationBuilder<A>.(A) -> Unit
-) = AnnotationBuilder(A::class.java).apply {
-  initBuilder(this, this.emptyAnnotation)
-}.build()
+  noinline initBuilder: AnnotationBuilder<A>.(A) -> Unit
+) = AnnotationBuilder(A::class.java).applyBuilder(initBuilder)
 
 class AnnotationBuilder<A : Annotation>(private val annotationClass: Class<out A>) {
 
-  @PublishedApi
+  fun applyBuilder(initBuilder: AnnotationBuilder<A>.(A) -> Unit): A {
+    initBuilder(this, this.emptyAnnotation)
+    return build()
+  }
+
   @Suppress("UNCHECKED_CAST")
-  internal val emptyAnnotation by lazy {
+  private val emptyAnnotation by lazy {
     emptyAnnotationsCache.getOrPut(annotationClass) {
       AnnotationUtils.synthesizeAnnotation(annotationClass)
     } as A
@@ -37,11 +39,13 @@ class AnnotationBuilder<A : Annotation>(private val annotationClass: Class<out A
   internal val annotationAttributes = hashMapOf<String, Any>()
 
   private val annotationDelegate = lazy {
-    AnnotationUtils.synthesizeAnnotation(annotationAttributes, annotationClass, null)
+    runCatching {
+      AnnotationUtils.synthesizeAnnotation(annotationAttributes, annotationClass, null)
+    }
   }
 
   @PublishedApi
-  internal fun build() = annotationDelegate.value
+  internal fun build() = annotationDelegate.value.getOrThrow()
 
   infix fun <T : Any> KProperty0<T>.set(value: T?) {
     if (value == null) return

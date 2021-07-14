@@ -7,36 +7,79 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  */
+@file:SpringBootApplication(proxyBeanMethods = false)
 
 package io.github.mrvanish97.kbnsext
 
+import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingClass
+import org.springframework.context.annotation.Lazy
+import org.springframework.context.annotation.PropertySource
+import org.springframework.core.env.Profiles
+
+rootConfiguration(
+  name = ROOT_SCRIPT_CONFIG_NAME
+)
 
 bean {
   TestEntity(SCRIPT_ENTITY)
 }
 
-environment({ true }) {
+environment { false }.then {
+  bean {
+    TestEntity(NOT_EXISTING_SCRIPT_ENTITY)
+  }
+}.elseIf { true }.then {
   bean(ENV_SCRIPT_ENTITY) {
     TestEntity(ENV_SCRIPT_ENTITY)
+  }
+}.`else` {
+  bean {
+    TestEntity(NOT_EXISTING_SCRIPT_ENTITY)
+  }
+}
+
+profile("non-existing") {
+  bean {
+    TestEntity(NOT_EXISTING_SCRIPT_ENTITY)
+  }
+}
+
+if (environment.acceptsProfiles(Profiles.of("not-existing"))) {
+  bean {
+    TestEntity(context.id)
   }
 }
 
 bean {
-  TestEntity(applicationContext.applicationName)
+  TestEntity(context.applicationName)
 }
 
-annotate {
+bean("${MISSING_ANNOTATED_SCRIPT_ENTITY}testEntity") {
+  TestEntity(MISSING_ANNOTATED_SCRIPT_ENTITY)
+}.annotate {
   with<ConditionalOnMissingClass> {
     it::value set String::class.javaName
   }
-}.bean("${MISSING_ANNOTATED_SCRIPT_ENTITY}testEntity") {
-  TestEntity(MISSING_ANNOTATED_SCRIPT_ENTITY)
 }
 
-annotate {
-  with<ConditionalOnClass> { it::value set String::class.java }
-}.bean {
+bean {
   TestEntity(ref<TestEntity>(ENV_SCRIPT_ENTITY).value + CONDITIONAL_PREFIX)
+}.annotateWith<ConditionalOnClass> { it::value set String::class.java }
+
+configuration(
+  name = CONFIGURATION_BEAN_ANNOTATED,
+  className = CONFIGURATION_BEAN_ANNOTATED_CLASS_NAME
+) {
+  bean(
+    name = CONFIGURATION_BEAN_ANNOTATED_BEAN_NAME,
+    methodName = CONFIGURATION_BEAN_ANNOTATED_METHOD_NAME
+  ) {
+    TestEntity(CONFIGURATION_BEAN_ANNOTATED_BEAN_NAME)
+  }.annotateWith<Lazy>()
+}.annotate {
+  with<PropertySource> {
+    it::value set ""
+  }
 }
