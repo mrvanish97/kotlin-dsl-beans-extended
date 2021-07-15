@@ -1,5 +1,9 @@
 # Changelog
 
+### 0.3.2
+- Fixed one small design issue when you have to pass a java class into the annotation dsl instead of kotlin ones.
+For now, if you pass a kotlin class, it will automatically converted into a plain java class instance to make it possible to build a ByteBuddy proxy without runtime exceptions
+
 ### 0.3.1
 - Fixed beans creation in root configuration while not specifying anything in `rootConfiguration`
 

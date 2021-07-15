@@ -12,6 +12,7 @@ package io.github.mrvanish97.kbnsext
 
 import org.springframework.core.annotation.AnnotationUtils
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.reflect.KClass
 import kotlin.reflect.KProperty0
 
 private val emptyAnnotationsCache = ConcurrentHashMap<Class<out Annotation>, Annotation>()
@@ -49,36 +50,44 @@ class AnnotationBuilder<A : Annotation>(private val annotationClass: Class<out A
 
   infix fun <T : Any> KProperty0<T>.set(value: T?) {
     if (value == null) return
-    checkAlreadyBuild()
+    checkAlreadyBuilt()
     annotationAttributes[name] = value
   }
 
   @JvmName("setOneElement")
   inline infix fun <reified T : Any> KProperty0<Array<T>>.set(value: T?) {
     if (value == null) return
-    checkAlreadyBuild()
+    checkAlreadyBuilt()
     annotationAttributes[name] = arrayOf(value)
   }
 
   infix fun <T : Annotation> KProperty0<T>.set(builder: AnnotationBuilder<T>?) {
     if (builder == null) return
-    checkAlreadyBuild()
+    checkAlreadyBuilt()
     annotationAttributes[name] = builder.annotationAttributes
   }
 
+
+  @JvmName("setClass")
+  infix fun <T : KClass<*>> KProperty0<T>.set(klass: KClass<*>?) {
+    if (klass == null) return
+    checkAlreadyBuilt()
+    annotationAttributes[name] = klass.java
+  }
+
   infix fun <T : Annotation> KProperty0<Array<T>>.set(builders: Array<AnnotationBuilder<T>>) {
-    checkAlreadyBuild()
+    checkAlreadyBuilt()
     annotationAttributes[name] = builders.map { it.annotationAttributes }.toTypedArray()
   }
 
   @JvmName("setOneElement")
   infix fun <T : Annotation> KProperty0<Array<T>>.set(builder: AnnotationBuilder<T>) {
-    checkAlreadyBuild()
+    checkAlreadyBuilt()
     annotationAttributes[name] = arrayOf(builder.annotationAttributes)
   }
 
   @PublishedApi
-  internal fun checkAlreadyBuild() {
+  internal fun checkAlreadyBuilt() {
     if (annotationDelegate.isInitialized()) {
       throw IllegalArgumentException("AnnotationBuilder is already built")
     }
