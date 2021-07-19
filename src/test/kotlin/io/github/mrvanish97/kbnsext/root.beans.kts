@@ -64,6 +64,10 @@ bean("${MISSING_ANNOTATED_SCRIPT_ENTITY}testEntity") {
   }
 }
 
+bean(LIST_OF_STRINGS) {
+  mutableListOf<String>()
+}
+
 bean {
   TestEntity(ref<TestEntity>(ENV_SCRIPT_ENTITY).value + CONDITIONAL_PREFIX)
 }.annotateWith<ConditionalOnClass> { it::value set String::class.java }
@@ -82,4 +86,8 @@ configuration(
   with<PropertySource> {
     it::value set ""
   }
+}
+
+init {
+  ref<MutableList<String>>(LIST_OF_STRINGS).add(LIST_OF_STRINGS_ELEMENT)
 }

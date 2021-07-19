@@ -11,6 +11,9 @@
 package io.github.mrvanish97.kbnsext
 
 import io.github.mrvanish97.kbnsext.BeansScript.Companion.BEANS_SCRIPT_EXTENSION
+import net.bytebuddy.dynamic.DynamicType
+import net.bytebuddy.implementation.InvocationHandlerAdapter
+import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.support.GenericApplicationContext
 import org.springframework.core.env.ConfigurableEnvironment
 import org.springframework.core.env.Profiles
@@ -43,6 +46,11 @@ abstract class BeansScript(
       AnnotatableConfiguration::class.java,
       BeansScript::rootUserConfiguration.name
     )
+    private val afterPropertiesSetUpdater = AtomicReferenceFieldUpdater.newUpdater(
+      BeansScript::class.java,
+      Function1::class.java,
+      BeansScript::afterPropertiesSet.name
+    )
     private const val BEANS_SCRIPT_NAME = "beans"
     const val BEANS_SCRIPT_EXTENSION = "$BEANS_SCRIPT_NAME.kts"
     const val COMPILED_SCRIPT_SUFFIX = "_$BEANS_SCRIPT_NAME"
@@ -50,6 +58,9 @@ abstract class BeansScript(
 
   @Volatile
   private var rootUserConfiguration: AnnotatableConfiguration? = null
+
+  @Volatile
+  private var afterPropertiesSet: (BeanSupplier.() -> Unit)? = null
 
   private val thisScriptClassName = this::class.java.simpleName.substringBefore(COMPILED_SCRIPT_SUFFIX)
 
@@ -113,6 +124,24 @@ abstract class BeansScript(
     } else {
       innerContainers
     }.forEach { it.buildClassAndInject() }
+  }
+
+  fun init(init: BeanSupplier.() -> Unit) {
+    if (!afterPropertiesSetUpdater.compareAndSet(this, afterPropertiesSet, init)) {
+      throw IllegalArgumentException("init should be called only once")
+    }
+  }
+
+  override fun customizeBuilder(builder: DynamicType.Builder<Any>): DynamicType.Builder<Any> {
+    return if (afterPropertiesSetUpdater.compareAndSet(this, null, null)) {
+      builder
+    } else {
+      builder.implement(InitializingBean::class.java)
+        .method { it.name == InitializingBean::afterPropertiesSet.name }
+        .intercept(InvocationHandlerAdapter.of { _, _, _ ->
+          afterPropertiesSet?.invoke(BeanSupplier(context))
+        })
+    }
   }
 
 }

@@ -16,7 +16,12 @@ import kotlin.reflect.full.declaredFunctions
 
 fun main(args: Array<String>) {
   val context = runApplication(*args)
-  val test = BeansFileAnnotationTest(context, context.getBeanProvider<TestEntity>().toList())
+  @Suppress("UNCHECKED_CAST")
+  val test = BeansFileAnnotationTest(
+    context = context,
+    testEntities = context.getBeanProvider<TestEntity>().toList(),
+    listOfStrings = context.getBean(LIST_OF_STRINGS, List::class.java) as? List<String> ?: listOf()
+  )
   test::class.declaredFunctions
     .filter { it.annotations.asMerged().isPresent(Test::class.java) }
     .forEach { it.call(test) }

@@ -8,6 +8,7 @@ Using this library can help you organize your beans without creating pointless `
 Obviously, this is designed to use on projects with Kotlin configured.
 
 Since 0.2.0, it's possible to generate anonymous `@Configuration` classes right in the script.
+Also, since 0.3.0, every bean created under the script's root is adding to the anonymous root configuration.
 
 ### Usage example
 After you've added a library dependency, create a file under the source folder with extension `.beans.kts`
@@ -39,6 +40,11 @@ profile("veryImportantProfileName") {
       extras = ref<ExtrasBean>("extrasBeanName") // and this one for wiring with 'qualifier'
     )
   }
+}
+
+// consider this as a body of afterPropertiesSet() method of the InitializingBean interface
+init {
+  ref<MyVeryInterestingRegistry>().add(RegistryElement())
 }
 ```
 
@@ -139,10 +145,10 @@ If you want to use another one script, you can do the following:
   ```
 The main thing it does is basically adding string reference to the compiled script class as a `source` for Spring Application
 **Important note:** for the current version, it's not possible not to define `proxyBeanMethods = false` since it will lead to spring proxying errors.
-I hope it will be fixed in the future. For this case, I've opened a discussion on Kotlin forum. 
+I hope it will be fixed in the future. For this case, I've opened a discussion on Kotlin forum.
 
+### Intellij IDEA Plugin
 By default, after your `.beans.kts` file has been created, you have to write `package` declaration everytime manually, which is quite frustrating.
 That's why, I came up with IDEA Plugin, which automatically adds `package` into your `.beans.kts` file
 
-### Intellij IDEA Plugin
-<a href="https://github.com/mrvanish97/kotlin-dsl-beans-extended-plugin">Github repo</a>. As soon as plugin will appear on JetBranis Marketplace, I will update this section.
+Here's the <a href="https://github.com/mrvanish97/kotlin-dsl-beans-extended-plugin">Github repo</a>. As soon as plugin will appear on JetBranis Marketplace, I will update this section.

@@ -13,6 +13,7 @@ package io.github.mrvanish97.kbnsext
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.PropertySource
@@ -23,6 +24,8 @@ const val NOT_EXISTING_SCRIPT_ENTITY = "not-existing-script-entity"
 const val CONDITIONAL_PREFIX = "-conditional"
 const val ANNOTATED_CONDITIONAL_SCRIPT_ENTITY = ENV_SCRIPT_ENTITY + CONDITIONAL_PREFIX
 const val MISSING_ANNOTATED_SCRIPT_ENTITY = "missing-annotated-env-script-entity"
+const val LIST_OF_STRINGS = "list-of-strings-script-entity"
+const val LIST_OF_STRINGS_ELEMENT = "element"
 const val CONFIGURATION_BEAN_ANNOTATED = "configuration-bean-annotated"
 const val CONFIGURATION_BEAN_ANNOTATED_CLASS_NAME = "ConfigBeanAnnotated"
 const val CONFIGURATION_BEAN_ANNOTATED_METHOD_NAME = "getTestEntity"
@@ -33,6 +36,7 @@ const val ROOT_SCRIPT_CONFIG_NAME = "root-script-config-name"
 class BeansFileAnnotationTest @Autowired constructor(
   private val context: ApplicationContext,
   private val testEntities: List<TestEntity>,
+  @Qualifier(LIST_OF_STRINGS) private val listOfStrings: List<String>
 ) {
 
   private fun isEntityPresented(value: String): Boolean {
@@ -97,6 +101,11 @@ class BeansFileAnnotationTest @Autowired constructor(
   @Test
   fun hasNoNonExistingBeans() {
     assert(!isEntityPresented(NOT_EXISTING_SCRIPT_ENTITY))
+  }
+
+  @Test
+  fun hasElementInList() {
+    assert(listOfStrings.contains(LIST_OF_STRINGS_ELEMENT))
   }
 
 }

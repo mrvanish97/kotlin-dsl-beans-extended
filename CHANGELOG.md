@@ -1,5 +1,9 @@
 # Changelog
 
+### 0.4.0
+- `init` function added to the script in order to define `afterPropertiesSet` of root configuration class.
+This indicates that after adding `init` function to your script, the root configuration will implement `InitializingBean` interface
+
 ### 0.3.2
 - Fixed one small design issue when you have to pass a java class into the annotation dsl instead of kotlin ones.
 For now, if you pass a kotlin class, it will automatically converted into a plain java class instance to make it possible to build a ByteBuddy proxy without runtime exceptions

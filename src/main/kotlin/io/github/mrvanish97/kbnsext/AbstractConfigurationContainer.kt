@@ -11,6 +11,7 @@
 package io.github.mrvanish97.kbnsext
 
 import net.bytebuddy.ByteBuddy
+import net.bytebuddy.dynamic.DynamicType
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy
 import net.bytebuddy.implementation.InvocationHandlerAdapter
 import org.springframework.beans.factory.support.BeanDefinitionReaderUtils
@@ -102,12 +103,17 @@ abstract class AbstractConfigurationContainer(
 
   protected abstract fun buildAnonymousConfigurationName(): String
 
+  protected open fun customizeBuilder(builder: DynamicType.Builder<Any>) : DynamicType.Builder<Any> {
+    return builder
+  }
+
   internal fun buildClassAndInject(): Class<*> {
     val className = definition.className ?: buildAnonymousConfigurationName()
-    var classTemplate = ByteBuddy()
+    var classBuilder = ByteBuddy()
       .subclass(Any::class.java)
       .name("${basePackage}.${className}")
       .annotateType(*definition.buildAnnotations(Unit).toTypedArray())
+    classBuilder = customizeBuilder(classBuilder)
     var methodCounter = 0
     beans.forEach {
       val beanMethodNameBase = if (it.name != null) {
@@ -124,20 +130,20 @@ abstract class AbstractConfigurationContainer(
       val beanMethodName = it.methodName ?: "get$beanMethodNameBase"
       val destroyMethodName = it.destroyMethodName ?: "onDestroy$beanMethodNameBase"
       val beanAnnotations = it.buildAnnotations(destroyMethodNameProvider(destroyMethodName))
-      classTemplate = classTemplate
+      classBuilder = classBuilder
         .defineMethod(beanMethodName, it.beanClass, Modifier.PUBLIC)
         .intercept(InvocationHandlerAdapter.of { _, _, _ ->
           it.function(BeanSupplier(applicationContext))
         })
         .annotateMethod(*beanAnnotations.toTypedArray())
       val onDestroy = it.onDestroyCallback ?: return@forEach
-      classTemplate = classTemplate
+      classBuilder = classBuilder
         .defineMethod(destroyMethodName, Unit::class.java, Modifier.PUBLIC)
         .intercept(InvocationHandlerAdapter.of { _, _, _ ->
           onDestroy()
         })
     }
-    val generatedClass = classTemplate.make()
+    val generatedClass = classBuilder.make()
       .load(applicationContext.classLoader, ClassLoadingStrategy.Default.INJECTION)
       .loaded
     val configBeanName = definition.name ?: generateBeanMethodName(generatedClass)
