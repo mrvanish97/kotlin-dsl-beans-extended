@@ -73,8 +73,8 @@ bean {
 }
 ```
 
-**Important note:** if you are adding a bean using `annotate`, you don't have to introduce `@Bean` annotation since it's added automatically.
-Also, values for annotations `@Scope`, `@Lazy`, `@Primary`, `@Description` and `@Role` can be defined by passing corresponding arguments into `bean(...)` function.
+**Important note:** if you are adding a bean using `annotate`, you don't have to introduce `@Bean` or `@Component` annotations since they're added automatically. All necessary annotation arguments are being collected from values passed into `bean`, `component` or `rootComponent` functions.
+Also, values for annotations `@Scope`, `@Lazy`, `@Primary`, `@Description`, `@Role` and `@Profile` can be defined by passing corresponding arguments into these functions.
 However, you are still allowed to pick any of these styles but avoid declaring logically same bean modifiers using both approaches at the same time.
 It will produce `IllegalArgumentException` with a message like `Duplicated annotations...`
 
