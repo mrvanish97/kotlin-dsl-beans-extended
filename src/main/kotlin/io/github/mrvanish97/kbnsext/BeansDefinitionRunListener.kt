@@ -21,6 +21,7 @@ import org.springframework.context.support.GenericApplicationContext
 import org.springframework.core.annotation.AnnotationAttributes
 import org.springframework.core.type.AnnotationMetadata
 import org.springframework.util.ClassUtils
+import java.lang.reflect.InvocationTargetException
 import java.util.concurrent.ConcurrentHashMap
 
 private val loaded = ConcurrentHashMap.newKeySet<ConfigurableApplicationContext>()
@@ -101,9 +102,13 @@ class BeansDefinitionRunListener(
     }
     val constructor = clazz.getConstructor(GenericApplicationContext::class.java) ?: return
     if (!constructor.trySetAccessible()) return
-    val script = constructor.newInstance(context) as BeansScript
-    script.buildClasses()
-    cache.add(className)
+    try {
+      val script = constructor.newInstance(context) as BeansScript
+      script.buildClasses()
+      cache.add(className)
+    } catch (e : InvocationTargetException) {
+      throw e.targetException
+    }
   }
 
 }

@@ -1,5 +1,9 @@
 # Changelog
 
+### 0.4.1
+- A small change in a way script body's exceptions are being thrown.
+For now, `BeansDefinitionRunListener` unwraps `InvocationTargetException` and rethrows the original one 
+
 ### 0.4.0
 - `init` function added to the script in order to define `afterPropertiesSet` of root configuration class.
 This indicates that after adding `init` function to your script, the root configuration will implement `InitializingBean` interface
