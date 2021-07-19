@@ -20,7 +20,7 @@ plugins {
 }
 
 group = "io.github.mrvanish97.kbnsext"
-version = "0.3.2"
+version = "0.4.0"
 java.sourceCompatibility = JavaVersion.VERSION_11
 
 repositories {
