@@ -145,7 +145,7 @@ If you want to use another one script, you can do the following:
   ```
 The main thing it does is basically adding string reference to the compiled script class as a `source` for Spring Application
 **Important note:** for the current version, it's not possible not to define `proxyBeanMethods = false` since it will lead to spring proxying errors.
-I hope it will be fixed in the future. For this case, I've opened a discussion on Kotlin forum.
+I hope it will be fixed in the future. For solving this case, I opened a discussion on <a href="https://discuss.kotlinlang.org/t/how-to-compile-kotlin-script-into-open-not-final-java-class/22401">Kotlin forum</a>.
 
 ### Intellij IDEA Plugin
 By default, after your `.beans.kts` file has been created, you have to write `package` declaration everytime manually, which is quite frustrating.
